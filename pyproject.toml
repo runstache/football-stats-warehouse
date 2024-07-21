@@ -1,0 +1,163 @@
+
+[project]
+name = "batch-football-data"
+version = "0.0.1"
+authors = [{name = "runstache"}]
+description = "Data Retrieval Project for NFL Football Stats"
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/runstache/football-stats-warehouse"
+"Bug Tracker" = "https://github.com/runstache/football-stats-warehouse/issues"
+
+[tool.pytest.ini_options]
+pythonpath="src"
+
+[tool.pylint.main]
+source-roots=["src"]
+
+# Always return a 0 (non-error) status code, even if lint errors are found. This
+# is primarily useful in continuous integration scripts.
+# exit-zero =
+
+# Removes the Issue with loading the Models Module in Pylint scan.
+disable = "E0401"
+
+# Return non-zero exit code if any of these messages/categories are detected,
+# even if score is above --fail-under value. Syntax same as enable. Messages
+# specified are enabled, while categories only check already-enabled messages.
+# fail-on =
+
+# Specify a score threshold under which the program will exit with error.
+fail-under = 9.75
+
+# Files or directories to be skipped. They should be base names, not paths.
+ignore = ["config"]
+
+# Add files or directories matching the regular expressions patterns to the
+# ignore-list. The regex matches against paths and can be in Posix or Windows
+# format. Because '\\' represents the directory delimiter on Windows systems, it
+# can't be used as an escape character.
+# ignore-paths =
+
+# Files or directories matching the regular expression patterns are skipped. The
+# regex matches against base names, not paths. The default value ignores Emacs
+# file locks
+ignore-patterns = ["^\\.#"]
+
+# List of module names for which member attributes should not be checked (useful
+# for modules/projects where namespaces are manipulated during runtime and thus
+# existing member attributes cannot be deduced by static analysis). It supports
+# qualified module names, as well as Unix pattern matching.
+# ignored-modules =
+
+# Python code to execute, usually for sys.path manipulation such as
+# pygtk.require().
+# init-hook =
+
+# Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the
+# number of processors available to use, and will cap the count on Windows to
+# avoid hangs. (default: 1)
+jobs = 0
+
+# Pickle collected data for later comparisons.
+persistent = true
+
+# Minimum Python version to use for version dependent checks. Will default to the
+# version used to run pylint.
+py-version = "3.11"
+
+[tool.pylint.basic]
+# Regular expression which should only match function or class names that do not
+# require a docstring.
+no-docstring-rgx = "^(?:test|mock)?_"
+
+[tool.pylint.design]
+# Maximum number of arguments for function / method. (default: 5)
+max-args = 7
+
+# Maximum number of attributes for a class (see R0902). (default: 7)
+max-attributes = 9
+
+# Maximum number of boolean expressions in an if statement (see R0916).
+max-bool-expr = 5
+
+# Maximum number of branch for function / method body.
+max-branches = 12
+
+# Maximum number of locals for function / method body.
+max-locals = 15
+
+# Maximum number of parents for a class (see R0901).
+max-parents = 7
+
+# Maximum number of public methods for a class (see R0904).
+max-public-methods = 20
+
+# Maximum number of return / yield for function / method body.
+max-returns = 6
+
+# Maximum number of statements in function / method body.
+max-statements = 50
+
+# Minimum number of public methods for a class (see R0903). (default: 2)
+min-public-methods = 0
+
+[tool.pylint.logging]
+# The type of string formatting that logging methods do. `old` means using %
+# formatting, `new` is for `{}` formatting.
+logging-format-style = "old"
+
+# Logging modules to check that the string format arguments are in logging
+# function parameter format.
+logging-modules = ["logging"]
+
+[tool.pylint.miscellaneous]
+# List of note tags to take in consideration, separated by a comma.
+notes = ["FIXME", "XXX", "TODO"]
+
+# Regular expression of note tags to take in consideration.
+# notes-rgx =
+
+[tool.pylint.refactoring]
+# Maximum number of nested blocks for function / method body
+max-nested-blocks = 5
+
+# Complete name of functions that never returns. When checking for inconsistent-
+# return-statements if a never returning function is called then it will be
+# considered as an explicit return statement and no message will be printed.
+never-returning-functions = ["sys.exit", "argparse.parse_error"]
+
+[tool.pylint.reports]
+# Python expression which should return a score less than or equal to 10. You
+# have access to the variables 'fatal', 'error', 'warning', 'refactor',
+# 'convention', and 'info' which contain the number of messages in each category,
+# as well as 'statement' which is the total number of statements analyzed. This
+# score is used by the global evaluation report (RP0004).
+evaluation = "max(0, 0 if fatal else 10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10))"
+
+# Template used to display messages. This is a python new-style format string
+# used to format the message information. See doc for all details.
+# msg-template =
+
+# Set the output format. Available formats are text, parseable, colorized, json
+# and msvs (visual studio). You can also give a reporter class, e.g.
+# mypackage.mymodule.MyReporterClass.
+# output-format =
+
+# Tells whether to display a full report or only the messages.
+# reports =
+
+# Activate the evaluation score.
+score = true
+
+[mypy]
+mypy_path = "src/"
+
+[tool.bandit]

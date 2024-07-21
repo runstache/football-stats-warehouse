@@ -1,0 +1,21 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pandas = "*"
+fake-user-agent = "*"
+pyquery = "*"
+selenium = "*"
+
+[dev-packages]
+pytest = "*"
+assertpy = "*"
+mypy = "*"
+pylint = "*"
+pycodestyle = "*"
+pyflakes = "*"
+pytest-cov = "*"
+bandit = "*"
+responses = "*"
