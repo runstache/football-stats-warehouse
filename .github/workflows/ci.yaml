@@ -13,7 +13,7 @@ jobs:
         with:
             python-version: '3.11'
       - name: Cache Dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         id: cache-dependencies
         with:
           path: ./.venv
@@ -34,7 +34,7 @@ jobs:
         with:
             python-version: '3.11'
       - name: Cache Dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         id: cache-dependencies
         with:
           path: ./.venv
@@ -49,3 +49,5 @@ jobs:
       - run: pipenv run pylint src/
       - run: pipenv run pycodestyle src/ --max-line-length 100
       - run: pipenv run bandit -r src/ -c ./pyproject.toml
+    needs:
+      - test
