@@ -20,6 +20,7 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/Pipfile.lock') }}
           restore-keys: |
             ${{ runner.os }}-pipenv
+      - run: pip install pipenv
       - name: Install requirements
         if: steps.cache-dependencies.outputs.cache-hit != 'true'
         run: pipenv sync --dev
@@ -40,7 +41,7 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/Pipfile.lock') }}
           restore-keys: |
             ${{ runner.os }}-pipenv
-
+      - run: pip install pipenv
       - name: Install requirements
         if: steps.cache-dependencies.outputs.cache-hit != 'true'
         run: pipenv sync --dev
