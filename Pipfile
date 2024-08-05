@@ -8,6 +8,7 @@ pandas = "*"
 fake-user-agent = "*"
 pyquery = "*"
 selenium = "*"
+pyarrow = "*"
 
 [dev-packages]
 pytest = "*"

@@ -2,34 +2,9 @@
 Tests for the Game Service.
 """
 
-import json
-import logging
-
-import pytest
 from assertpy import assert_that
 
 from services.stats import GameService, BaseService
-
-TEST_FILE = './tests/test_files/team-output.json'
-
-
-@pytest.fixture
-def match_up() -> dict:
-    """
-    Returns the Match up Data
-    """
-
-    with open(TEST_FILE, 'r', encoding='utf-8-sig') as input_file:
-        return json.load(input_file)
-
-
-@pytest.fixture(autouse=True)
-def setup_logging() -> None:
-    """
-    Sets up the logging
-    """
-
-    logging.basicConfig(level=logging.INFO)
 
 
 def test_get_game_info(monkeypatch, match_up):
