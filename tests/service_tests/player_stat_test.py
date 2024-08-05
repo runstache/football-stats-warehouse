@@ -1,44 +1,10 @@
 """
 Tests for Splitting a Scrape Result into individual Stats.
 """
-import json
-import logging
 
-import pytest
 from assertpy import assert_that
 
 from services.stats import PlayerService, BaseService
-
-PAYLOAD_FILE = './tests/test_files/box-output.json'
-
-
-def load_test_file(path: str) -> dict:
-    """
-    Loads the Test File to a Dictionary.
-    :param path: Path to JSON File
-    :return: Dictionary.
-    """
-
-    with open(path, 'r', encoding='utf-8-sig') as input_file:
-        return json.load(input_file)
-
-
-@pytest.fixture(scope='function')
-def box_score() -> dict:
-    """
-    Box score Fixture.
-    :return: Dictionary
-    """
-
-    return load_test_file(PAYLOAD_FILE)
-
-
-@pytest.fixture(autouse=True)
-def setup_logging():
-    """
-    Sets up the Basic Logging
-    """
-    logging.basicConfig(level=logging.INFO)
 
 
 def test_get_player_stats(monkeypatch, box_score):

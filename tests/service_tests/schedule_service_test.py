@@ -8,26 +8,14 @@ from assertpy import assert_that
 
 from services.stats import ScheduleService
 
-TEST_FILE = './tests/test_files/schedule-output.json'
 
-
-@pytest.fixture
-def test_response() -> dict:
-    """
-    Loads the Response.
-    """
-
-    with open(TEST_FILE, 'r', encoding='utf-8') as input_file:
-        return json.load(input_file)
-
-
-def test_get_schedule(test_response, monkeypatch):
+def test_get_schedule(schedule, monkeypatch):
     """
     Tests retrieving the schedule entries.
     """
 
     service = ScheduleService()
-    monkeypatch.setattr(service, 'get_stats_payload', lambda a: test_response)
+    monkeypatch.setattr(service, 'get_stats_payload', lambda a: schedule)
 
     result = service.get_schedule(1, 2023, 1)
 
