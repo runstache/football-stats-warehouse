@@ -10,7 +10,7 @@ BOX_SCORE_FILE = './tests/test_files/box-output.json'
 SCHEDULE_FILE = './tests/test_files/schedule-output.json'
 
 
-def load_json_file(path:str) -> dict:
+def load_json_file(path: str) -> dict:
     """
     Loads a JSON File
     :param path: Path to File

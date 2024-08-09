@@ -33,13 +33,13 @@ def test_main(monkeypatch, tmp_path, schedule):
     reg_season = [f"week_{x}.parquet" for x in range(1, 19)]
     post_season = [f"week_{x}.parquet" for x in [1, 2, 3, 5]]
 
-    assert_that(os.listdir(os.path.join(tmp_path.as_posix(), 'year=2023'))) \
+    assert_that(os.listdir(os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023'))) \
         .contains_only('type=1', 'type=2', 'type=3')
-    assert_that(os.listdir(os.path.join(tmp_path.as_posix(), 'year=2023', 'type=1'))) \
+    assert_that(os.listdir(os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023', 'type=1'))) \
         .contains_only(*pre_season)
-    assert_that(os.listdir(os.path.join(tmp_path.as_posix(), 'year=2023', 'type=2'))) \
+    assert_that(os.listdir(os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023', 'type=2'))) \
         .contains_only(*reg_season)
-    assert_that(os.listdir(os.path.join(tmp_path.as_posix(), 'year=2023', 'type=3'))) \
+    assert_that(os.listdir(os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023', 'type=3'))) \
         .contains_only(*post_season)
 
 
@@ -73,10 +73,10 @@ def test_main_week_type(monkeypatch, tmp_path, schedule):
     schedule_info_pull.main(2023, tmp_path.as_posix(), week='1', type='1')
 
     assert_that(os.path.exists(
-        os.path.join(tmp_path.as_posix(), 'year=2023', 'type=1', 'week_1.parquet'))).is_true()
+        os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023', 'type=1', 'week_1.parquet'))).is_true()
 
     assert_that(os.path.exists(
-        os.path.join(tmp_path.as_posix(), 'year=2023', 'type=1', 'week_2.parquet'))).is_false()
+        os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023', 'type=1', 'week_2.parquet'))).is_false()
 
 
 def test_get_weeks_17():
@@ -129,8 +129,8 @@ def test_main_week_failure(monkeypatch, caplog, tmp_path, schedule):
 
     schedule_info_pull.main(2023, tmp_path.as_posix())
 
-    assert_that(os.path.exists(os.path.join(tmp_path.as_posix(), 'year=2023', 'type=1'))).is_false()
-    assert_that(os.path.exists(os.path.join(tmp_path.as_posix(), 'year=2023', 'type=2'))).is_false()
-    assert_that(os.path.exists(os.path.join(tmp_path.as_posix(), 'year=2023', 'type=3'))).is_false()
+    assert_that(os.path.exists(os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023', 'type=1'))).is_false()
+    assert_that(os.path.exists(os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023', 'type=2'))).is_false()
+    assert_that(os.path.exists(os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023', 'type=3'))).is_false()
 
     assert_that(caplog.text).contains('Failed to retrieve Schedule')

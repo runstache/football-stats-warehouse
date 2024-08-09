@@ -98,7 +98,7 @@ def main(year: int, output: str, **kwargs) -> None:
         else:
             weeks = get_weeks(year, gt)
         for wk in weeks:
-            output_path = os.path.join(output, f"year={year}", f"type={gt}", f"week_{wk}.parquet")
+            output_path = os.path.join(output, 'schedules', f"year={year}", f"type={gt}", f"week_{wk}.parquet")
             records = get_schedule(year, wk, gt)
             if not records:
                 logger.error('Failed to retrieve Schedule for Type %s : Week %s', gt, wk)
@@ -112,10 +112,10 @@ def main(year: int, output: str, **kwargs) -> None:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser()
-    parser.add_argument("-y", "--year", type=int, help="Year Value")
-    parser.add_argument("-o", "--output", type=str, help="Output Path")
-    parser.add_argument('-t', '--type', type=str, help='Game Type')
-    parser.add_argument('-w', '--week', type=str, help='Week Value')
+    parser.add_argument("-y", "--year", type=int, help="Year Value", required=True)
+    parser.add_argument("-o", "--output", type=str, help="Output Path", required=True)
+    parser.add_argument('-t', '--type', type=str, help='Game Type', required=False)
+    parser.add_argument('-w', '--week', type=str, help='Week Value', required=False)
 
     args = parser.parse_args()
     cli_args = vars(args)
