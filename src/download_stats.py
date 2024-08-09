@@ -1,15 +1,14 @@
 """
-Team Statistics Scraping Script
+Retrieves the Stats for a given Schedule File
 """
+
 import sys
 
-from services.stats import TeamService
+from services.stats import TeamService, PlayerService
 import pandas
 import os
 import logging
 import argparse
-
-OUTPUT_FOLDER = 'teams'
 
 
 def load_schedule_file(path: str) -> pandas.DataFrame:
@@ -21,7 +20,7 @@ def load_schedule_file(path: str) -> pandas.DataFrame:
     return pandas.read_parquet(path, engine='pyarrow')
 
 
-def get_team_stats(game_id: str, year: int, week: int, game_type: str, ) -> pandas.DataFrame | None:
+def get_team_stats(game_id: str, year: int, week: int, game_type: str) -> pandas.DataFrame | None:
     """
     Returns the Team based Stats from the provided Game ID.
     :param game_id: Game ID
@@ -32,6 +31,22 @@ def get_team_stats(game_id: str, year: int, week: int, game_type: str, ) -> pand
     """
     service = TeamService()
     result = service.get_team_stats(game_id, week, year, game_type)
+    if result:
+        return pandas.DataFrame.from_records(result)
+    return None
+
+
+def get_player_stats(game_id: str, year: int, week: int, game_type: str) -> pandas.DataFrame | None:
+    """
+    Returns the Player based Stats from the provided Game ID.
+    :param game_id: Game ID
+    :param year: Year Value
+    :param week: Week Number
+    :param game_type: Game Type ID
+    :return: Data Frame
+    """
+    service = PlayerService()
+    result = service.get_player_stats(game_id, week, year, game_type)
     if result:
         return pandas.DataFrame.from_records(result)
     return None
@@ -53,29 +68,36 @@ def write_output(frame: pandas.DataFrame, path: str) -> None:
     frame.to_parquet(path, engine='pyarrow')
 
 
-def main(source_file: str, output_directory: str) -> None:
+def main(source_file: str, output_directory: str, stat_type: str) -> None:
     """
     Main Function to pull Team Level Stats
     :param source_file: Schedule Source File Parquet File
     :param output_directory: Output Directory.
+    :param stat_type: Stats Type, Player or Team
     :return: None
     """
 
-    def compile_frames(row, collection: list[pandas.DataFrame]):
+    def compile_frames(row, collection: list[pandas.DataFrame], stat: str):
         """
         Processes Each Schedule Row and adds the Resulting frame to the collection.
         :param row: Frame Row
         :param collection: Data Frame Collection
         :return: None
         """
+        result = None
+        if stat == 'team':
+            result = get_team_stats(str(row['game_id']), int(row['year']), int(row['week']),
+                                    str(row['game_type']))
 
-        result = get_team_stats(str(row['game_id']), int(row['year']), int(row['week']),
-                                str(row['game_type']))
+        if stat == 'player':
+            result = get_player_stats(str(row['game_id']), int(row['year']), int(row['week']),
+                                      str(row['game_type']))
+
         if result is not None:
             collection.append(result)
 
     logger = logging.getLogger(__name__)
-    logger.info('Processing Schedule File: %s', source_file)
+    logger.info('Processing Schedule File for %s Stats: %s', stat_type, source_file)
 
     if not os.path.exists(source_file):
         sys.exit('Schedule File Not Found')
@@ -88,10 +110,10 @@ def main(source_file: str, output_directory: str) -> None:
 
     frames = []
 
-    schedule_frame.apply(lambda row: compile_frames(row, frames), axis=1)
+    schedule_frame.apply(lambda row: compile_frames(row, frames, stat_type), axis=1)
 
     if not frames:
-        logger.warning('No Team Stats Loaded from Schedule File')
+        logger.warning('No %s Stats Loaded from Schedule File', stat_type)
         sys.exit(0)
 
     stats = pandas.concat(frames, ignore_index=True)
@@ -108,6 +130,7 @@ if __name__ == '__main__':
                         help='Input Schedule Source File', required=True)
     parser.add_argument('-o', '--output', type=str,
                         help='Output File Path including file name', required=True)
+    parser.add_argument('-t', '--stat', type=str, help='Type of Stats to retrieve', required=True)
 
     args = parser.parse_args()
-    main(args.schedule, args.output)
+    main(args.schedule, args.output, args.stat)
