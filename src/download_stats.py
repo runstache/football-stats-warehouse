@@ -9,7 +9,7 @@ import sys
 
 import pandas
 
-from services.stats import TeamService, PlayerService
+from services.stats import TeamService, PlayerService, GameService
 
 
 def load_schedule_file(path: str) -> pandas.DataFrame:
@@ -53,6 +53,24 @@ def get_player_stats(game_id: str, year: int, week: int, game_type: str) -> pand
     return None
 
 
+def get_game_info(game_id: str, year: int, week: int, game_type: str) -> pandas.DataFrame | None:
+    """
+    Returns the game Info as a Data Frame
+    :param game_id: Game ID
+    :param year: Year Value
+    :param week: Week Number
+    :param game_type: Game Type ID
+    :return: Data Frame
+    """
+    service = GameService()
+    result = service.get_game_info(game_id, week, year, game_type)
+
+    if not result:
+        return None
+
+    return pandas.DataFrame.from_records([result])
+
+
 def write_output(frame: pandas.DataFrame, path: str) -> None:
     """
     Writes the DataFrame output to Parquet
@@ -93,7 +111,9 @@ def main(source_file: str, output_directory: str, stat_type: str) -> None:
         if stat == 'player':
             result = get_player_stats(str(row['game_id']), int(row['year']), int(row['week']),
                                       str(row['game_type']))
-
+        if stat == 'game':
+            result = get_game_info(str(row['game_id']), int(row['year']), int(row['week']),
+                                   str(row['game_type']))
         if result is not None:
             collection.append(result)
 
