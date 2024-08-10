@@ -78,7 +78,7 @@ def main(year: int, output: str, **kwargs) -> None:
     week_number = kwargs.get('week', 0)
     game_type = kwargs.get('type', 0)
 
-    if not year or year == 0:
+    if not year:
         logger.error('Year Value is Missing')
         sys.exit()
 
@@ -86,17 +86,15 @@ def main(year: int, output: str, **kwargs) -> None:
         logger.error('Output Path is Missing')
         sys.exit()
 
-    if game_type != 0:
+    game_types = list(range(1, 4))
+    if game_type and game_type != 0:
         game_types = [int(game_type)]
-    else:
-        game_types = list(range(1, 4))
-
     logger.info('Retrieving Schedule for %s', year)
     for gt in game_types:
-        if week_number != 0:
+        weeks = get_weeks(year, gt)
+        if week_number and week_number != 0:
             weeks = [int(week_number)]
-        else:
-            weeks = get_weeks(year, gt)
+
         for wk in weeks:
             output_path = os.path.join(output, 'schedules', f"year={year}", f"type={gt}",
                                        f"week_{wk}.parquet")
