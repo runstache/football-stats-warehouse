@@ -2,13 +2,14 @@
 Retrieves the Stats for a given Schedule File
 """
 
+import argparse
+import logging
+import os
 import sys
 
-from services.stats import TeamService, PlayerService
 import pandas
-import os
-import logging
-import argparse
+
+from services.stats import TeamService, PlayerService
 
 
 def load_schedule_file(path: str) -> pandas.DataFrame:
@@ -108,7 +109,7 @@ def main(source_file: str, output_directory: str, stat_type: str) -> None:
         logger.warning('Schedule file is empty: %s', source_file)
         sys.exit('No Schedule File Records')
 
-    frames = []
+    frames: list[pandas.DataFrame] = []
 
     schedule_frame.apply(lambda row: compile_frames(row, frames, stat_type), axis=1)
 

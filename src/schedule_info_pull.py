@@ -98,7 +98,8 @@ def main(year: int, output: str, **kwargs) -> None:
         else:
             weeks = get_weeks(year, gt)
         for wk in weeks:
-            output_path = os.path.join(output, 'schedules', f"year={year}", f"type={gt}", f"week_{wk}.parquet")
+            output_path = os.path.join(output, 'schedules', f"year={year}", f"type={gt}",
+                                       f"week_{wk}.parquet")
             records = get_schedule(year, wk, gt)
             if not records:
                 logger.error('Failed to retrieve Schedule for Type %s : Week %s', gt, wk)
