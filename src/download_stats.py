@@ -104,14 +104,14 @@ def main(source_file: str, output_directory: str, stat_type: str) -> None:
         :return: None
         """
         result = None
-        if stat == 'team':
+        if stat == 'teams':
             result = get_team_stats(str(row['game_id']), int(row['year']), int(row['week']),
                                     str(row['game_type']))
 
-        if stat == 'player':
+        if stat == 'players':
             result = get_player_stats(str(row['game_id']), int(row['year']), int(row['week']),
                                       str(row['game_type']))
-        if stat == 'game':
+        if stat == 'games':
             result = get_game_info(str(row['game_id']), int(row['year']), int(row['week']),
                                    str(row['game_type']))
         if result is not None:
@@ -140,7 +140,8 @@ def main(source_file: str, output_directory: str, stat_type: str) -> None:
     stats = pandas.concat(frames, ignore_index=True)
 
     logger.info('Writing Output to %s', output_directory)
-    write_output(stats, output_directory)
+    output_path = os.path.join(output_directory, os.path.basename(source_file))
+    write_output(stats, output_path)
     logger.info('Done')
 
 
