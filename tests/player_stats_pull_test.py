@@ -39,13 +39,12 @@ def test_main(box_score, monkeypatch, schedule_frame, tmp_path):
     monkeypatch.setattr(BaseService, 'get_stats_payload', lambda *args: box_score)
     schedule_path = os.path.join(tmp_path.as_posix(), 'schedules', 'year=2024', 'type=2',
                                  'week_1.parquet')
-    output_path = os.path.join(tmp_path.as_posix(), 'players', 'year=2024', 'type=2',
-                               'week-1.parquet')
+    output_path = os.path.join(tmp_path.as_posix(), 'players', 'year=2024', 'type=2')
 
-    download_stats.main(schedule_path, output_path, 'player')
+    download_stats.main(schedule_path, output_path, 'players')
 
     assert_that(os.listdir(os.path.join(tmp_path.as_posix(), 'players', 'year=2024', 'type=2'))) \
-        .contains('week-1.parquet')
+        .contains('week_1.parquet')
 
 
 def test_main_no_schedule_file(match_up, monkeypatch, tmp_path):
@@ -53,11 +52,10 @@ def test_main_no_schedule_file(match_up, monkeypatch, tmp_path):
     Tests no schedule file
     """
 
-    output_path = os.path.join(tmp_path.as_posix(), 'players', 'year=2024', 'type=2',
-                               'week-1.parquet')
+    output_path = os.path.join(tmp_path.as_posix(), 'players', 'year=2024', 'type=2')
     assert_that(download_stats.main) \
         .raises(SystemExit) \
-        .when_called_with('fart', output_path, 'player')
+        .when_called_with('fart', output_path, 'players')
 
 
 def test_main_no_schedule_frame(monkeypatch, schedule_frame, tmp_path, caplog):
@@ -68,10 +66,9 @@ def test_main_no_schedule_frame(monkeypatch, schedule_frame, tmp_path, caplog):
     schedule_path = os.path.join(tmp_path.as_posix(), 'schedules', 'year=2024', 'type=2',
                                  'week_1.parquet')
     monkeypatch.setattr(download_stats, 'load_schedule_file', lambda *args: None)
-    output_path = os.path.join(tmp_path.as_posix(), 'players', 'year=2024', 'type=2',
-                               'week-1.parquet')
+    output_path = os.path.join(tmp_path.as_posix(), 'players', 'year=2024', 'type=2')
     assert_that(download_stats.main) \
         .raises(SystemExit) \
-        .when_called_with(schedule_path, output_path, 'player')
+        .when_called_with(schedule_path, output_path, 'players')
 
     assert_that(caplog.text).contains('Schedule file is empty:')
