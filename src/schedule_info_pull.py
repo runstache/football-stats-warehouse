@@ -121,4 +121,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     cli_args = vars(args)
 
-    main(int(cli_args.get('year', 0)), cli_args.get('output', ''), **cli_args)
+    main(int(args.year), args.output, **cli_args)
