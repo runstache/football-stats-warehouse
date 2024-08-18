@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 root_folder=$1
 scheduled_folder=$root_folder/schedules
 search_directory="$scheduled_folder/year=$2/type=$3"
