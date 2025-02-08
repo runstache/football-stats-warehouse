@@ -8,46 +8,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Python
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: "Set up Python"
         uses: actions/setup-python@v5
         with:
-            python-version: '3.11'
-      - name: Cache Dependencies
-        uses: actions/cache@v4
-        id: cache-dependencies
-        with:
-          path: ./.venv
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/Pipfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pipenv
-      - run: pip install pipenv
-      - name: Install requirements
-        if: steps.cache-dependencies.outputs.cache-hit != 'true'
-        run: pipenv sync --dev
-      - run: pipenv run pytest
+          python-version-file: ".python-version"
+      - name: Install dependencies
+        run: uv install --all-groups
+      - name: Run Tests
+        run: pytest
+
   static_analysis:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Python
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: "Set up Python"
         uses: actions/setup-python@v5
         with:
-            python-version: '3.11'
-      - name: Cache Dependencies
-        uses: actions/cache@v4
-        id: cache-dependencies
-        with:
-          path: ./.venv
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/Pipfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pipenv
-      - run: pip install pipenv
-      - name: Install requirements
-        if: steps.cache-dependencies.outputs.cache-hit != 'true'
-        run: pipenv sync --dev
-      - run: pipenv run mypy src/ --ignore-missing-imports
-      - run: pipenv run pylint src/
-      - run: pipenv run pycodestyle src/ --max-line-length 100
-      - run: pipenv run bandit -r src/ -c ./pyproject.toml
+          python-version-file: ".python-version"
+      - name: Install dependencies
+        run: uv install --all-groups
+      - name: Run MyPy
+        run: mypy src/ --ignore-missing-imports
+      - name: Run Flake8
+        run: flake8 src/ --max-line-length 100
+      - name: Run Pyflakes
+        run: pyflakes src/
+      - name: Run PyCodeStyle
+        run: pycodestyle src/ --max-line-length 100
+      - name: Run Pylint
+        run: pyline src/
+      - name: Run Bandit
+        run: bandit -r src/ -c ./pyproject.toml
     needs:
       - test
