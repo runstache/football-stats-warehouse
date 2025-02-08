@@ -16,7 +16,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-groups
       - name: Run Tests
-        run: pytest
+        run: uv run pytest tests/
 
   static_analysis:
     runs-on: ubuntu-latest
@@ -32,16 +32,16 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-groups
       - name: Run MyPy
-        run: mypy src/ --ignore-missing-imports
+        run: uv run mypy src/ --ignore-missing-imports
       - name: Run Flake8
-        run: flake8 src/ --max-line-length 100
+        run: uv run flake8 src/ --max-line-length 100
       - name: Run Pyflakes
-        run: pyflakes src/
+        run: uv run pyflakes src/
       - name: Run PyCodeStyle
-        run: pycodestyle src/ --max-line-length 100
+        run: uv run pycodestyle src/ --max-line-length 100
       - name: Run Pylint
-        run: pyline src/
+        run: uv run pyline src/
       - name: Run Bandit
-        run: bandit -r src/ -c ./pyproject.toml
+        run: uv run bandit -r src/ -c ./pyproject.toml
     needs:
       - test
