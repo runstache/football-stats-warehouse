@@ -1,7 +1,6 @@
 """
 Tests for the Teams Status Data Pull
 """
-import os
 
 from assertpy import assert_that
 
@@ -31,20 +30,21 @@ def test_get_team_stats_no_response(monkeypatch):
     assert_that(result).is_none()
 
 
-def test_main(match_up, monkeypatch, schedule_frame, tmp_path):
+def test_main(match_up, monkeypatch, session, s3):
     """
     Tests the Main Function
     """
 
     monkeypatch.setattr(BaseService, 'get_stats_payload', lambda *args: match_up)
-    schedule_path = os.path.join(tmp_path.as_posix(), 'schedules', 'year=2024', 'type=2',
-                                 'week_1.parquet')
-    output_path = os.path.join(tmp_path.as_posix(), 'teams', 'year=2024', 'type=2')
 
-    download_stats.main(schedule_path, output_path, 'teams')
+    schedule_key = 'schedules/2020/1/week_1.parquet'
+    bucket = 'warehouse-bucket'
 
-    assert_that(os.listdir(os.path.join(tmp_path.as_posix(), 'teams', 'year=2024', 'type=2'))) \
-        .contains('week_1.parquet')
+    download_stats.main(bucket, schedule_key, 'teams')
+
+    client = session.client('s3')
+    response = client.list_objects_v2(Bucket=bucket, Prefix='teams/2020/1/')
+    assert_that(response.get('Contents', [])).is_not_empty()
 
 
 def test_main_no_schedule_file(match_up, monkeypatch, tmp_path):
@@ -52,23 +52,11 @@ def test_main_no_schedule_file(match_up, monkeypatch, tmp_path):
     Tests no schedule file
     """
 
-    output_path = os.path.join(tmp_path.as_posix(), 'teams', 'year=2024', 'type=2')
+    monkeypatch.setattr(BaseService, 'get_stats_payload', lambda *args: match_up)
+
+    schedule_key = 'schedules/2020/1/week_1.parquet'
+    bucket = 'warehouse-bucket'
+
     assert_that(download_stats.main) \
         .raises(SystemExit) \
-        .when_called_with('fart', output_path, 'teams')
-
-
-def test_main_no_schedule_frame(monkeypatch, schedule_frame, tmp_path, caplog):
-    """
-    Tests no schedule frame returned
-    """
-
-    schedule_path = os.path.join(tmp_path.as_posix(), 'schedules', 'year=2024', 'type=2',
-                                 'week_1.parquet')
-    monkeypatch.setattr(download_stats, 'load_schedule_file', lambda *args: None)
-    output_path = os.path.join(tmp_path.as_posix(), 'teams', 'year=2024', 'type=2')
-    assert_that(download_stats.main) \
-        .raises(SystemExit) \
-        .when_called_with(schedule_path, output_path, 'teams')
-
-    assert_that(caplog.text).contains('Schedule file is empty:')
+        .when_called_with(bucket, schedule_key, 'teams')

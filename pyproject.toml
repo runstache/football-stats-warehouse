@@ -1,19 +1,20 @@
 
 [project]
 name = "batch-football-data"
-version = "0.0.1"
+version = "0.0.2"
 authors = [{name = "runstache"}]
 description = "Data Retrieval Project for NFL Football Stats"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
+    "boto3>=1.36.21",
     "fake-user-agent>=2.3.9",
-    "pandas>=2.2.3",
+    "polars>=1.22.0",
     "pyarrow>=19.0.0",
     "pyquery>=2.0.1",
     "selenium>=4.28.1",
@@ -172,6 +173,7 @@ dev = [
     "assertpy>=1.1",
     "bandit>=1.8.2",
     "flake8>=7.1.1",
+    "moto>=5.0.28",
     "mypy>=1.15.0",
     "pycodestyle>=2.12.1",
     "pyflakes>=3.2.0",

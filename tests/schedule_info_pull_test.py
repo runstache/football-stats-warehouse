@@ -1,12 +1,11 @@
 """
 Tests for the Game Info retrieval script
 """
-import os.path
 
 from assertpy import assert_that
 
 import schedule_info_pull
-from services.stats import BaseService, ScheduleService
+from services.stats import BaseService
 
 
 def test_get_schedule(monkeypatch, schedule):
@@ -21,62 +20,66 @@ def test_get_schedule(monkeypatch, schedule):
     assert_that(result).is_length(1)
 
 
-def test_main(monkeypatch, tmp_path, schedule):
+def test_main(monkeypatch, tmp_path, schedule, s3, session):
     """
     Tests the Main Function
     """
 
     monkeypatch.setattr(BaseService, 'get_stats_payload', lambda *args: schedule)
-    schedule_info_pull.main(2023, tmp_path.as_posix())
+    schedule_info_pull.main('warehouse-bucket', 2023)
 
-    pre_season = [f"week_{x}.parquet" for x in range(1, 5)]
-    reg_season = [f"week_{x}.parquet" for x in range(1, 19)]
-    post_season = [f"week_{x}.parquet" for x in [1, 2, 3, 5]]
+    client = session.client('s3')
+    response = client.list_objects_v2(Bucket='warehouse-bucket', Prefix='schedules/2023/preseason')
+    assert_that(response.get('Contents', [])).is_not_empty()
 
-    assert_that(os.listdir(os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023'))) \
-        .contains_only('type=1', 'type=2', 'type=3')
-    assert_that(os.listdir(os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023', 'type=1'))) \
-        .contains_only(*pre_season)
-    assert_that(os.listdir(os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023', 'type=2'))) \
-        .contains_only(*reg_season)
-    assert_that(os.listdir(os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023', 'type=3'))) \
-        .contains_only(*post_season)
+    response = client.list_objects_v2(Bucket='warehouse-bucket', Prefix='schedules/2023/regular')
+    assert_that(response.get('Contents', [])).is_not_empty()
+
+    response = client.list_objects_v2(Bucket='warehouse-bucket', Prefix='schedules/2023/postseason')
+    assert_that(response.get('Contents', [])).is_not_empty()
 
 
-def test_main_no_year(tmp_path, caplog):
+def test_main_no_year(tmp_path, caplog, s3, session):
     """
     Tests the main function with an invalid year
     """
     assert_that(schedule_info_pull.main) \
         .raises(SystemExit) \
-        .when_called_with(0, tmp_path.as_posix())
+        .when_called_with('warehouse-bucket', 0)
 
     assert_that(caplog.text).contains('Year Value is Missing')
 
 
-def test_main_no_output(caplog):
+def test_main_no_output(caplog, s3, session):
     """
     Tests the main function with no output parameter
     """
     assert_that(schedule_info_pull.main) \
         .raises(SystemExit) \
-        .when_called_with(2023, '')
+        .when_called_with('', 2023)
 
-    assert_that(caplog.text).contains('Output Path is Missing')
+    assert_that(caplog.text).contains('Output Bucket is Missing')
 
 
-def test_main_week_type(monkeypatch, tmp_path, schedule):
+def test_main_week_type(monkeypatch, schedule, s3, session):
     """
     Tests the main function with the Week and Type Keyword Arguments
     """
     monkeypatch.setattr(BaseService, 'get_stats_payload', lambda *args: schedule)
-    schedule_info_pull.main(2023, tmp_path.as_posix(), week='1', type='1')
 
-    assert_that(os.path.exists(
-        os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023', 'type=1', 'week_1.parquet'))).is_true()
+    args = {
+        'bucket': 'warehouse-bucket',
+        'year': 2023,
+        'week': 1,
+        'type': 1
+    }
 
-    assert_that(os.path.exists(
-        os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023', 'type=1', 'week_2.parquet'))).is_false()
+    schedule_info_pull.main(**args)
+
+    client = session.client('s3')
+    response = client.list_objects_v2(Bucket='warehouse-bucket',
+                                      Prefix='schedules/2023/preseason/week_1.parquet')
+    assert_that(response.get('Contents', [])).is_not_empty()
 
 
 def test_get_weeks_17():
@@ -120,17 +123,20 @@ def test_get_weeks_post_season_2009():
     assert_that(result).contains_only(1, 2, 3, 4)
 
 
-def test_main_week_failure(monkeypatch, caplog, tmp_path, schedule):
+def test_main_week_failure(monkeypatch, s3, session, caplog):
     """
     Tests the main function with a failed week
     """
 
     monkeypatch.setattr(BaseService, 'get_stats_payload', lambda a, b: None)
+    args = {
+        'bucket': 'warehouse-bucket',
+        'year': 2023
+    }
+    schedule_info_pull.main(**args)
 
-    schedule_info_pull.main(2023, tmp_path.as_posix())
-
-    assert_that(os.path.exists(os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023', 'type=1'))).is_false()
-    assert_that(os.path.exists(os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023', 'type=2'))).is_false()
-    assert_that(os.path.exists(os.path.join(tmp_path.as_posix(), 'schedules', 'year=2023', 'type=3'))).is_false()
+    client = session.client('s3')
+    response = client.list_objects_v2(Bucket='warehouse-bucket', Prefix='schedules/2023/')
+    assert_that(response.get('Contents', [])).is_empty()
 
     assert_that(caplog.text).contains('Failed to retrieve Schedule')

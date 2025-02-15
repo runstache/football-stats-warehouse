@@ -6,22 +6,51 @@ import argparse
 import logging
 import os
 import sys
+from io import BytesIO
 
-import pandas
+import polars
+from boto3 import Session
+from botocore.client import BaseClient
+from botocore.exceptions import ClientError
 
 from services.stats import TeamService, PlayerService, GameService
 
 
-def load_schedule_file(path: str) -> pandas.DataFrame:
+def create_client(session: Session) -> BaseClient:
     """
-    Loads the Schedule File to a Data Frame
-    :param path: Path to Frame
-    :return: Data Frame
+    Creates a Base S3 Client
+    :param session: Boto Session
+    :return: S3 Client
     """
-    return pandas.read_parquet(path, engine='pyarrow')
+
+    if os.getenv('S3_ENDPOINT'):
+        return session.client('s3', endpoint_url=os.getenv('S3_ENDPOINT'))
+    return session.client('s3')
 
 
-def get_team_stats(game_id: str, year: int, week: int, game_type: str) -> pandas.DataFrame | None:
+def load_schedule_file(bucket: str, key: str, session: Session) -> polars.DataFrame | None:
+    """
+    Loads the Schedule File from S3 Bucket
+    :param bucket: S3 Bucket
+    :param key: S3 Key
+    :param session: Boto Session
+    :return: Optional Data Frame
+    """
+
+    try:
+        client = create_client(session)
+        response = client.get_object(Bucket=bucket, Key=key)
+
+        content = response['Body'].read()
+        return polars.read_parquet(content)
+
+    except ClientError as ex:
+        logging.error('Failed to load Schedule File: %s : %s', key, ex.args)
+
+    return None
+
+
+def get_team_stats(game_id: str, year: int, week: int, game_type: str) -> polars.DataFrame | None:
     """
     Returns the Team based Stats from the provided Game ID.
     :param game_id: Game ID
@@ -33,11 +62,11 @@ def get_team_stats(game_id: str, year: int, week: int, game_type: str) -> pandas
     service = TeamService()
     result = service.get_team_stats(game_id, week, year, game_type)
     if result:
-        return pandas.DataFrame.from_records(result)
+        return polars.DataFrame(result)
     return None
 
 
-def get_player_stats(game_id: str, year: int, week: int, game_type: str) -> pandas.DataFrame | None:
+def get_player_stats(game_id: str, year: int, week: int, game_type: str) -> polars.DataFrame | None:
     """
     Returns the Player based Stats from the provided Game ID.
     :param game_id: Game ID
@@ -49,11 +78,11 @@ def get_player_stats(game_id: str, year: int, week: int, game_type: str) -> pand
     service = PlayerService()
     result = service.get_player_stats(game_id, week, year, game_type)
     if result:
-        return pandas.DataFrame.from_records(result)
+        return polars.DataFrame(result)
     return None
 
 
-def get_game_info(game_id: str, year: int, week: int, game_type: str) -> pandas.DataFrame | None:
+def get_game_info(game_id: str, year: int, week: int, game_type: str) -> polars.DataFrame | None:
     """
     Returns the game Info as a Data Frame
     :param game_id: Game ID
@@ -68,39 +97,45 @@ def get_game_info(game_id: str, year: int, week: int, game_type: str) -> pandas.
     if not result:
         return None
 
-    return pandas.DataFrame.from_records([result])
+    return polars.DataFrame([result])
 
 
-def write_output(frame: pandas.DataFrame, path: str) -> None:
+def write_output(frame: polars.DataFrame, bucket: str, key: str, session: Session) -> None:
     """
-    Writes the DataFrame output to Parquet
+    Writes the DataFrame output to Parquet in S3 bucket
     :param frame: DataFrame
-    :param path: Output Path
+    :param bucket: S3 Bucket
+    :param key: S3 Key
+    :param session: Boto Session
     :return: None
     """
-    output_file_name = os.path.basename(path)
-    output_directory = path.replace(output_file_name, '')
 
-    if not os.path.exists(output_directory):
-        os.makedirs(output_directory)
+    stream = BytesIO()
+    frame.write_parquet(stream)
 
-    frame.to_parquet(path, engine='pyarrow')
+    try:
+        client = create_client(session)
+        client.put_object(Bucket=bucket, Key=key, Body=stream.getvalue())
+    except ClientError as ex:
+        logging.error('Failed to write output to S3 bucket: %s : %s', key, ex.args)
+        raise ex
+    return None
 
 
-def main(source_file: str, output_directory: str, stat_type: str) -> None:
+def main(bucket: str, schedule_key: str, stat_type: str) -> None:
     """
     Main Function to pull Team Level Stats
-    :param source_file: Schedule Source File Parquet File
-    :param output_directory: Output Directory.
+    :param bucket: S3 Bucket
+    :param schedule_key: S3 Schedule File Key
     :param stat_type: Stats Type, Player or Team
     :return: None
     """
 
-    def compile_frames(row, collection: list[pandas.DataFrame], stat: str):
+    def compile_frames(row: dict, stat: str):
         """
         Processes Each Schedule Row and adds the Resulting frame to the collection.
-        :param row: Frame Row
-        :param collection: Data Frame Collection
+        :param row: Dictionary of the Row
+        :param stat: Stats Type
         :return: None
         """
         result = None
@@ -115,33 +150,33 @@ def main(source_file: str, output_directory: str, stat_type: str) -> None:
             result = get_game_info(str(row['game_id']), int(row['year']), int(row['week']),
                                    str(row['game_type']))
         if result is not None:
-            collection.append(result)
+            return result
 
     logger = logging.getLogger(__name__)
-    logger.info('Processing Schedule File for %s Stats: %s', stat_type, source_file)
+    logger.info('Processing Schedule File for %s Stats: %s', stat_type, schedule_key)
 
-    if not os.path.exists(source_file):
-        sys.exit('Schedule File Not Found')
+    session = Session()
 
-    schedule_frame = load_schedule_file(source_file)
+    schedule_frame = load_schedule_file(bucket, schedule_key, session)
 
     if schedule_frame is None or len(schedule_frame) == 0:
-        logger.warning('Schedule file is empty: %s', source_file)
+        logger.warning('Schedule file is empty: %s', schedule_key)
         sys.exit('No Schedule File Records')
 
-    frames: list[pandas.DataFrame] = []
-
-    schedule_frame.apply(lambda row: compile_frames(row, frames, stat_type), axis=1)
+    frames: list[polars.DataFrame] = []
+    rows = schedule_frame.to_dicts()
+    frames.extend([compile_frames(x, stat_type) for x in rows])
 
     if not frames:
         logger.warning('No %s Stats Loaded from Schedule File', stat_type)
         sys.exit(0)
 
-    stats = pandas.concat(frames, ignore_index=True)
+    stats = polars.concat([x for x in frames if x is not None], how='diagonal')
 
-    logger.info('Writing Output to %s', output_directory)
-    output_path = os.path.join(output_directory, os.path.basename(source_file))
-    write_output(stats, output_path)
+    output_key = schedule_key.replace('schedules', stat_type)
+
+    logger.info('Writing Output to %s', output_key)
+    write_output(stats, bucket, output_key, session)
     logger.info('Done')
 
 
@@ -149,10 +184,10 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--schedule", type=str,
-                        help='Input Schedule Source File', required=True)
-    parser.add_argument('-o', '--output', type=str,
-                        help='Output File Path including file name', required=True)
+                        help='Schedule File S3 Key', required=True)
+    parser.add_argument('-b', '--bucket', type=str,
+                        help='Warehouse S3 Bucket', required=True)
     parser.add_argument('-t', '--stat', type=str, help='Type of Stats to retrieve', required=True)
 
     args = parser.parse_args()
-    main(args.schedule, args.output, args.stat)
+    main(args.bucket, args.schedule, args.stat)

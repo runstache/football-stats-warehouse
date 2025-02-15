@@ -5,8 +5,12 @@ Pytest Fixtures.
 import json
 import os
 
-import pandas
+import boto3
+import polars
 import pytest
+from moto import mock_aws
+from io import BytesIO
+
 
 MATCH_UP_FILE = './tests/test_files/team-output.json'
 BOX_SCORE_FILE = './tests/test_files/box-output.json'
@@ -51,7 +55,7 @@ def schedule() -> dict:
 
 
 @pytest.fixture
-def schedule_frame(tmp_path) -> pandas.DataFrame:
+def schedule_frame(tmp_path) -> polars.DataFrame:
     """
     Registers a Schedule Data Frame
     """
@@ -67,11 +71,44 @@ def schedule_frame(tmp_path) -> pandas.DataFrame:
         'game_type': ['2'],
         'game_date': ['20240101']
     }
-    df = pandas.DataFrame.from_dict(record)
-    output_path = os.path.join(tmp_path.as_posix(), 'schedules', 'year=2024', 'type=2')
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-    df.to_parquet(
-        os.path.join(output_path, 'week_1.parquet'),
-        engine='pyarrow')
+    df = polars.DataFrame(record)
     return df
+
+
+@pytest.fixture
+def aws_credentials():
+    """
+    Sets up fake credentials
+    """
+
+    os.environ['AWS_ACCESS_KEY_ID'] = 'testing'
+    os.environ['AWS_SECRET_ACCESS_KEY'] = 'testing'
+    os.environ['AWS_SESSION_TOKEN'] = 'testing'
+    os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
+
+
+@pytest.fixture
+def session(aws_credentials):
+    """
+    Sets up a mock session
+    """
+    with mock_aws():
+        yield boto3.Session(region_name='us-east-1')
+
+
+@pytest.fixture
+def s3(session, schedule_frame):
+    """
+    Creates Mock S3 Buckets
+    """
+
+    client = session.client('s3')
+    client.create_bucket(Bucket='warehouse-bucket')
+
+    stream = BytesIO()
+    schedule_frame.write_parquet(stream)
+    client.put_object(Bucket='warehouse-bucket', Key='schedules/2020/1/week_1.parquet', Body=stream.getvalue())
+
+
+
+
