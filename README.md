@@ -213,3 +213,13 @@ service = GameService()
 results = service.get_game_info('12345')
 
 ```
+
+## Container Utilization
+
+The application is containerized to allow for executing the contained scripts via K8 Jobs. These scripts leverage the following Environment Variables
+to provide access to S3 buckets and the scraping throught Selenium:
+
+* AWS_ACCESS_KEY_ID: AWS Access Key
+* AWS_SECRET_ACCESS_KEY: AWS Secret Access Key
+* S3_ENDPOINT: Override for S3 URL to allow for use of Minio
+* SELENIUM_DRIVER: Path to the Chrom Web Driver (/usr/bin/webdriver)

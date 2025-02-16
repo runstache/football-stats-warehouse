@@ -5,7 +5,8 @@ Services for working with Stats retrieval.
 import logging
 
 from selenium import webdriver
-
+from selenium.webdriver.chrome.service import Service
+import os
 
 class BaseService:
     """
@@ -18,12 +19,15 @@ class BaseService:
         """
         Base Service Constructor to establish a Web Browser.
         """
-
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')
         options.add_argument('--ignore-certificate-errors')
 
-        self.browser = webdriver.Chrome(options=options)
+        if os.getenv('SELENIUM_DRIVER'):
+            service = Service(os.getenv('SELENIUM_DRIVER'))
+            self.browser = webdriver.Chrome(options=options, service=service)
+        else:
+            self.browser = webdriver.Chrome(options=options)
         self.logger = logging.getLogger(__name__)
 
     def get_stats_payload(self, url: str) -> dict | None:
