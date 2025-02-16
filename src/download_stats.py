@@ -154,8 +154,11 @@ def main(bucket: str, schedule_key: str, stat_type: str) -> None:
     logger = logging.getLogger(__name__)
     logger.info('Processing Schedule File for %s Stats: %s', stat_type, schedule_key)
 
-    session = Session()
+    if stat_type not in ('players', 'games', 'teams'):
+        logging.error('Invalid Stats Type: %s', stat_type)
+        sys.exit(0)
 
+    session = Session()
     schedule_frame = load_schedule_file(bucket, schedule_key, session)
 
     if schedule_frame is None or len(schedule_frame) == 0:
@@ -165,12 +168,11 @@ def main(bucket: str, schedule_key: str, stat_type: str) -> None:
     frames: list[polars.DataFrame] = []
     rows = schedule_frame.to_dicts()
     frames.extend([compile_frames(x, stat_type) for x in rows])
-
+    frames = [x for x in frames if x is not None]
     if not frames:
         logger.warning('No %s Stats Loaded from Schedule File', stat_type)
         sys.exit(0)
-
-    stats = polars.concat([x for x in frames if x is not None], how='diagonal')
+    stats = polars.concat(frames, how='diagonal')
 
     output_key = schedule_key.replace('schedules', stat_type)
 

@@ -47,11 +47,25 @@ def test_main(match_up, monkeypatch, session, s3):
     assert_that(response.get('Contents', [])).is_not_empty()
 
 
-def test_main_no_schedule_file(match_up, monkeypatch, tmp_path):
+def test_main_no_schedule_file(match_up, monkeypatch, s3):
     """
     Tests no schedule file
     """
 
+    monkeypatch.setattr(BaseService, 'get_stats_payload', lambda *args: match_up)
+
+    schedule_key = 'schedules/2020/1/week_2.parquet'
+    bucket = 'warehouse-bucket'
+
+    assert_that(download_stats.main) \
+        .raises(SystemExit) \
+        .when_called_with(bucket, schedule_key, 'teams')
+
+
+def test_main_invalid_stat_type(match_up, monkeypatch, s3):
+    """
+    Tests sending an invalid Stat Type to the Script
+    """
     monkeypatch.setattr(BaseService, 'get_stats_payload', lambda *args: match_up)
 
     schedule_key = 'schedules/2020/1/week_1.parquet'
@@ -59,4 +73,4 @@ def test_main_no_schedule_file(match_up, monkeypatch, tmp_path):
 
     assert_that(download_stats.main) \
         .raises(SystemExit) \
-        .when_called_with(bucket, schedule_key, 'teams')
+        .when_called_with(bucket, schedule_key, 'farts')
