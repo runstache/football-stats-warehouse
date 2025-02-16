@@ -1,12 +1,12 @@
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm AS builder
 
-RUN apt update -qy
-RUN apt install -qyy \
+RUN apt update -qy && apt install -qyy \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
     build-essential \
     ca-certificates \
-    python3-setuptools
+    python3-setuptools \
+    && apt clean
 
 ENV UV_LINK_MODE=copy \
     UV_PYTHON_DOWNLOADS=never \
@@ -24,8 +24,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM python:3.12-bookworm
 
-RUN apt update -qy && apt upgrade -qyy
-RUN apt install chromium-driver -qyy
+RUN apt update -qy && apt upgrade -qyy && apt install chromium-driver -qyy && apt clean
 COPY --from=builder /app /app
 COPY ./src /app
 
