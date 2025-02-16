@@ -183,6 +183,9 @@ def main(bucket: str, schedule_key: str, stat_type: str) -> None:
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
+    logging.getLogger('botocore').setLevel(logging.FATAL)
+    logging.getLogger('boto3').setLevel(logging.FATAL)
+
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--schedule", type=str,
                         help='Schedule File S3 Key', required=True)

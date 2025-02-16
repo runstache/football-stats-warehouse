@@ -154,6 +154,8 @@ def main(bucket: str, year: int, **kwargs) -> None:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
+    logging.getLogger('botocore').setLevel(logging.FATAL)
+    logging.getLogger('boto3').setLevel(logging.FATAL)
     parser = argparse.ArgumentParser()
     parser.add_argument("-y", "--year", type=int, help="Year Value", required=True)
     parser.add_argument("-b", "--bucket", type=str, help="Output Bucket", required=True)
