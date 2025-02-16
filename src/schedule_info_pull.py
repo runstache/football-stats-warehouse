@@ -3,17 +3,19 @@ Script to pull Game information and combine in a single parquet file.
 """
 import argparse
 import logging
+import os
 import os.path
 import sys
-import polars
 from io import BytesIO
+from typing import NamedTuple
+
+import polars
 from boto3 import Session
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
-import os
-from typing import NamedTuple
 
 from services.stats import ScheduleService
+
 
 class GameType(NamedTuple):
     """
@@ -23,7 +25,7 @@ class GameType(NamedTuple):
     game_type: str
 
 
-def create_client(session:Session) -> BaseClient:
+def create_client(session: Session) -> BaseClient:
     """
     Creates an S3 Client
     :param session: Boto3 Session
@@ -42,9 +44,9 @@ def get_game_types() -> list[GameType]:
     """
 
     return [
-        GameType(1,'preseason'),
-        GameType(2,'regular'),
-        GameType(3,'postseason')
+        GameType(1, 'preseason'),
+        GameType(2, 'regular'),
+        GameType(3, 'postseason')
     ]
 
 
@@ -104,7 +106,7 @@ def write_output(bucket: str, key: str, records: list[dict], session: Session) -
         raise ex
 
 
-def main(bucket:str, year: int, **kwargs) -> None:
+def main(bucket: str, year: int, **kwargs) -> None:
     """
     Main Function to download Game Stats and output to a parquet file
     :param bucket: S3 Bucket

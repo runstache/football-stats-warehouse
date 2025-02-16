@@ -223,3 +223,19 @@ to provide access to S3 buckets and the scraping throught Selenium:
 * AWS_SECRET_ACCESS_KEY: AWS Secret Access Key
 * S3_ENDPOINT: Override for S3 URL to allow for use of Minio
 * SELENIUM_DRIVER: Path to the Chrom Web Driver (/usr/bin/webdriver)
+
+## Executing Utility from Container
+
+The following scripts can be executed from a job:
+
+* download_stats.py: Downloads Stats for given period and type
+  * -s, --schedule: Schedule File S3 Key
+  * -b, --bucket: S3 Bucket Name
+  * -t, --stat: Type of Stats to retrieve (teams, players, games)
+* schedule_info_pull.py: Downloads the Schedule information for a given week/season/type
+  * -y, --year: Year value
+  * -b, --bucket: S3 Bucket to output
+  * -t, --type: Type of Season to retrieve (1=presear, 2=regular, 3=postseason) (Optional)
+  * -w, --week: Week number to retrieve. (Optional)
+
+The image is built to output the help from the schedule_info_pull.py file. You will need to override the command to execute each of the scripts.

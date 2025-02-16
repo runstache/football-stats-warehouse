@@ -119,7 +119,6 @@ def write_output(frame: polars.DataFrame, bucket: str, key: str, session: Sessio
     except ClientError as ex:
         logging.error('Failed to write output to S3 bucket: %s : %s', key, ex.args)
         raise ex
-    return None
 
 
 def main(bucket: str, schedule_key: str, stat_type: str) -> None:
@@ -149,8 +148,8 @@ def main(bucket: str, schedule_key: str, stat_type: str) -> None:
         if stat == 'games':
             result = get_game_info(str(row['game_id']), int(row['year']), int(row['week']),
                                    str(row['game_type']))
-        if result is not None:
-            return result
+
+        return result
 
     logger = logging.getLogger(__name__)
     logger.info('Processing Schedule File for %s Stats: %s', stat_type, schedule_key)

@@ -3,10 +3,11 @@ Services for working with Stats retrieval.
 """
 
 import logging
+import os
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-import os
+
 
 class BaseService:
     """
